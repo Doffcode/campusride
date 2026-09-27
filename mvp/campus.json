@@ -17,7 +17,7 @@
     {"id": "sports",    "name": "Sports Complex",       "kind": "facility", "icon": "⚽", "x": 665, "y": 615, "aliases": ["sports complex", "sports", "ground", "stadium", "gym", "स्पोर्ट्स", "ग्राउंड", "ஸ்போர்ட்ஸ்", "மைதானம்"]},
     {"id": "opal",      "name": "Opal Hostel",          "kind": "hostel",   "icon": "🏠", "x": 850, "y": 95,  "aliases": ["opal hostel", "opal", "girls hostel", "ओपल", "गर्ल्स हॉस्टल", "ஓபல்"]},
     {"id": "agate",     "name": "Agate Hostel",         "kind": "hostel",   "icon": "🏠", "x": 850, "y": 265, "aliases": ["agate hostel", "agate", "अगेट", "एगेट", "அகேட்"]},
-    {"id": "garnet",    "name": "Garnet Hostel",        "kind": "hostel",   "icon": "🏠", "x": 850, "y": 450, "aliases": ["garnet hostel", "garnet", "गार्नेट", "கார்னெட்"]},
+    {"id": "garnet",    "name": "Garnet Hostel",        "kind": "hostel",   "icon": "🏠", "x": 850, "y": 450, "aliases": ["garnet hostel", "garnet", "गार्नेट", "गारनेट", "கார்னெட்"]},
     {"id": "zircon",    "name": "Zircon Hostel",        "kind": "hostel",   "icon": "🏠", "x": 850, "y": 615, "aliases": ["zircon hostel", "zircon", "ज़िरकॉन", "जिरकॉन", "ஜிர்கான்"]}
   ],
   "edges": [

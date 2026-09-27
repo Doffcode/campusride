@@ -1,5 +1,9 @@
-"""Thin Sarvam AI REST client (see shared/sarvam_notes.md). Every failure becomes SarvamError."""
+"""Thin Sarvam AI REST client. Every failure becomes SarvamError.
 
+Saaras v4 (speech-to-text + language ID) · Sarvam-105B (understanding) · Sarvam Translate · Bulbul v3 (voice)
+"""
+
+import json
 import os
 from pathlib import Path
 
@@ -50,12 +54,23 @@ def _post(api: str, url: str, timeout: float, **kw) -> dict:
         raise SarvamError(f"{api} failed: bad JSON") from e
 
 
-def stt(audio: bytes, filename: str, lang: str) -> tuple[str, str]:
-    """Returns (transcript, detected_language_code)."""
-    data = _post("STT", f"{BASE}/speech-to-text", 30.0,
-                 headers={"api-subscription-key": _key()},
-                 files={"file": (filename, audio)},
-                 data={"model": "saaras:v3", "mode": "transcribe", "language_code": lang or "unknown"})
+def stt(audio: bytes, filename: str, lang: str, keyterms: list[str] | None = None) -> tuple[str, str]:
+    """Returns (transcript, detected_language_code).
+    Saaras v4 + keyterms (campus place names) hears "Garnet" instead of "government"; v3 is the fallback."""
+    form = {"model": os.environ.get("SARVAM_STT_MODEL", "saaras:v4"), "mode": "transcribe",
+            "language_code": lang or "unknown"}
+    if keyterms and form["model"] == "saaras:v4":
+        form["keyterms"] = json.dumps(keyterms[:50])
+    try:
+        data = _post("STT", f"{BASE}/speech-to-text", 30.0, headers={"api-subscription-key": _key()},
+                     files={"file": (filename, audio)}, data=form)
+    except SarvamError as e:
+        if form["model"] == "saaras:v3":
+            raise
+        print(f"[sarvam] {form['model']} failed, falling back to saaras:v3: {e}")
+        form = {"model": "saaras:v3", "mode": "transcribe", "language_code": lang or "unknown"}
+        data = _post("STT", f"{BASE}/speech-to-text", 30.0, headers={"api-subscription-key": _key()},
+                     files={"file": (filename, audio)}, data=form)
     transcript = data.get("transcript")
     if not isinstance(transcript, str):
         raise SarvamError("STT failed: no transcript")
@@ -69,7 +84,8 @@ def chat(messages: list[dict]) -> str:
                  json={"model": os.environ.get("SARVAM_CHAT_MODEL", "sarvam-105b"),
                        "messages": messages, "temperature": 0.0, "max_tokens": 800,
                        "response_format": {"type": "json_object"},
-                       "reasoning_effort": os.environ.get("SARVAM_REASONING", "low")})
+                       # Reasoning off: same answers for this extraction, ~1.6 s instead of ~4 s.
+                       "reasoning_effort": os.environ.get("SARVAM_REASONING") or None})
     try:
         content = data["choices"][0]["message"].get("content")
     except (KeyError, IndexError, TypeError, AttributeError) as e:
@@ -77,6 +93,18 @@ def chat(messages: list[dict]) -> str:
     if not content:
         raise SarvamError("Chat failed: empty content")
     return content
+
+
+def translate(text: str, target: str, source: str = "en-IN") -> str:
+    """Sarvam Translate: used to reply in languages we have no hand-written template for."""
+    data = _post("Translate", f"{BASE}/translate", 20.0,
+                 headers={"api-subscription-key": _key()},
+                 json={"input": text[:1900], "source_language_code": source,
+                       "target_language_code": target, "model": "sarvam-translate:v1"})
+    out = data.get("translated_text")
+    if not isinstance(out, str) or not out.strip():
+        raise SarvamError("Translate failed: empty text")
+    return out
 
 
 def tts(text: str, lang: str) -> str:

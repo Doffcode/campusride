@@ -4,7 +4,11 @@
 
 const SPEED = 250 / 60;        // EV speed in meters per sim-second (15 km/h)
 const DWELL = 20;              // sim-seconds an EV waits at a pickup while the student boards
-const REPLY_LANGS = ['en-IN', 'hi-IN', 'ta-IN'];
+const REPLY_LANGS = ['en-IN', 'hi-IN', 'ta-IN'];   // hand-written templates; every other language goes through Sarvam Translate
+const LANG_NAMES = {
+  'en-IN': 'English', 'hi-IN': 'Hindi', 'ta-IN': 'Tamil', 'te-IN': 'Telugu', 'kn-IN': 'Kannada', 'ml-IN': 'Malayalam',
+  'bn-IN': 'Bengali', 'mr-IN': 'Marathi', 'gu-IN': 'Gujarati', 'pa-IN': 'Punjabi', 'od-IN': 'Odia',
+};
 const NS = 'http://www.w3.org/2000/svg';
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -500,10 +504,11 @@ function resetSteps() { ['stt', 'llm', 'dispatch', 'tts'].forEach((s) => setStep
 function replyLang(serverLang, text) {
   const chosen = $('#lang').value;
   if (chosen !== 'unknown') return chosen;
-  if (REPLY_LANGS.includes(serverLang)) return serverLang;
   if (/[஀-௿]/.test(text)) return 'ta-IN';
   if (/[ऀ-ॿ]/.test(text)) return 'hi-IN';
-  if (/\b(se|jana|jaana|hai|mujhe|muje|chahiye|kaha|kahan)\b/i.test(text)) return 'hi-IN';   // romanized Hinglish
+  // Romanized Hinglish: Saaras may transcribe it in Latin script and tag it en-IN.
+  if (/\b(se|jana|jaana|hai|mujhe|muje|chahiye|kaha|kahan)\b/i.test(text)) return 'hi-IN';
+  if (LANG_NAMES[serverLang]) return serverLang;
   return 'en-IN';
 }
 
@@ -528,7 +533,8 @@ async function handleUnderstood(res, via) {
 
   const chip = (label, id) => id ? `<span class="chip">${label}: ${esc(name(id))}</span>` : `<span class="chip missing">${label}: ?</span>`;
   const srcChip = res.source === 'sarvam-llm' ? '<span class="chip src">Sarvam-105B</span>' : '<span class="chip src" title="LLM unavailable, used offline rules">offline rules</span>';
-  const chips = chip('From', pickup) + chip('To', drop) + srcChip;
+  const langChip = LANG_NAMES[lang] ? `<span class="chip lang">🗣 ${LANG_NAMES[lang]}${via === 'voice' ? ' · Saaras' : ''}</span>` : '';
+  const chips = chip('From', pickup) + chip('To', drop) + langChip + srcChip;
 
   if (!drop) {
     setStep('dispatch', 'skip');
@@ -556,28 +562,44 @@ async function handleUnderstood(res, via) {
 async function speakStep(text, lang) {
   if (!sarvamOk) { setStep('tts', 'skip'); return; }
   setStep('tts', 'active');
-  const r = await speak(text, lang);
-  setStep('tts', r ? 'done' : 'fail', r ? r.ms : null);
+  // Resolve as soon as the audio is ready (not when it finishes playing), so the next request isn't blocked.
+  await new Promise((done) => speak(text, lang, (r) => {
+    setStep('tts', r ? 'done' : 'fail', r ? r.ms : null);
+    // Sarvam Translate produced the reply in the student's language: show that instead of the English template.
+    if (r && r.text && r.text !== text) $('#res-reply').innerHTML = `<span>🔊</span><span>${esc(r.text)}</span>`;
+    done();
+  }));
 }
 
+/** Speak `text` in `lang` with Sarvam Bulbul. Languages without a hand-written template are
+    translated by Sarvam Translate first. `onReady` fires as soon as the audio is fetched. */
 let audioChain = Promise.resolve();
-function speak(text, lang) {
-  if (!sarvamOk) return Promise.resolve(null);
-  const job = audioChain.then(async () => {
+function speak(text, lang, onReady = () => {}) {
+  if (!sarvamOk) { onReady(null); return Promise.resolve(null); }
+  // Fetch right away; only playback is queued, so clips never talk over each other.
+  const fetched = (async () => {
     try {
-      const resp = await fetch('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, lang }) });
+      const body = { text, lang, translate: !REPLY_LANGS.includes(lang) };
+      const resp = await fetch('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || resp.status);
-      const audio = new Audio(`data:audio/wav;base64,${data.audio_b64}`);
-      await new Promise((ok) => { audio.onended = ok; audio.onerror = ok; audio.play().catch(ok); });
-      return { ms: data.timings.tts_ms };
+      const r = { ms: (data.timings.translate_ms || 0) + data.timings.tts_ms, text: data.text, b64: data.audio_b64 };
+      onReady(r);
+      return r;
     } catch (e) {
       console.warn('TTS failed', e);
+      onReady(null);
       return null;
     }
+  })();
+  audioChain = audioChain.then(async () => {
+    const r = await fetched;
+    if (!r) return;
+    const audio = new Audio(`data:audio/wav;base64,${r.b64}`);
+    // Never let one stuck clip block later announcements: give up after 20 s.
+    await new Promise((ok) => { audio.onended = ok; audio.onerror = ok; audio.play().catch(ok); setTimeout(ok, 20000); });
   });
-  audioChain = job;
-  return job;
+  return fetched;
 }
 
 async function understandText() {

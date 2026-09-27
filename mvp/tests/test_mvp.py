@@ -81,12 +81,28 @@ def test_api_understand():
 
 
 def test_api_voice(monkeypatch):
-    monkeypatch.setattr(sarvam, "stt", lambda a, f, l: ("मुझे ओपल हॉस्टल से ओरियन जाना है", "hi-IN"))
+    seen = {}
+    def fake_stt(audio, filename, lang, keyterms=None):
+        seen["keyterms"] = keyterms
+        return "मुझे ओपल हॉस्टल से ओरियन जाना है", "hi-IN"
+    monkeypatch.setattr(sarvam, "stt", fake_stt)
     r = client.post("/api/voice", files={"audio": ("s.webm", b"x" * 2000, "audio/webm")}, data={"lang": "unknown"})
     assert r.status_code == 200
     body = r.json()
     assert (body["pickup"], body["drop"], body["lang"]) == ("opal", "orion", "hi-IN")
     assert "stt_ms" in body["timings"]
+    assert "Garnet Hostel" in seen["keyterms"]      # place names are sent to Saaras v4
+    assert len(seen["keyterms"]) == len(set(seen["keyterms"])) <= 50   # Saaras rejects duplicates / >50
+
+
+def test_api_speak_translates(monkeypatch):
+    monkeypatch.setattr(sarvam, "translate", lambda t, lang: "బుక్ అయింది!")
+    monkeypatch.setattr(sarvam, "tts", lambda t, l: "QUJD")
+    r = client.post("/api/speak", json={"text": "Booked!", "lang": "te-IN", "translate": True})
+    assert r.status_code == 200 and r.json()["text"] == "బుక్ అయింది!"
+    monkeypatch.setattr(sarvam, "translate", boom)
+    r = client.post("/api/speak", json={"text": "Booked!", "lang": "te-IN", "translate": True})
+    assert r.status_code == 200 and r.json()["text"] == "Booked!"   # falls back to English
 
 
 def test_api_voice_errors():

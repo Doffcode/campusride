@@ -8,6 +8,8 @@ from mvp import sarvam
 
 CAMPUS = json.loads((Path(__file__).parent / "campus.json").read_text(encoding="utf-8"))
 PLACES = {n["id"]: n for n in CAMPUS["nodes"]}
+# Sent to Saaras v4 so place names are transcribed correctly.
+KEYTERMS = list(dict.fromkeys([n["name"] for n in CAMPUS["nodes"]] + ["LHC", "SAC", "NIT Trichy"]))  # Saaras rejects duplicates
 
 # Words right after a place that mark it as the pickup ("X se", Tamil "X-லிருந்து").
 _PICKUP_AFTER = ("se ", "से", "லிருந்து", "இருந்து")

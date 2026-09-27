@@ -1,11 +1,14 @@
-# ⚡ CampusRide: voice-first EV dispatch for NIT Trichy
+# ⚡ CampusRide: voice-first EV dispatch for NIT Trichy, powered by Sarvam AI
 
-Students book campus EVs by **speaking in their own language** (Hindi, Tamil, English, Hinglish). The system picks the nearest EV, routes it along the **shortest road path**, and shows a **live ETA**, instead of calling a number and waiting blind.
+Students book campus EVs by **speaking in their own language**: 11 Indian languages plus Hinglish. The system picks the nearest EV, routes it along the **shortest road path**, and shows a **live ETA**, instead of calling a number and waiting blind.
 
-Built with **Sarvam AI**:
-- **Saaras v3** turns speech into text, with automatic language detection
-- **Sarvam-105B** extracts the pickup and destination from what the student said
-- **Bulbul v3** reads back the confirmation and the "EV has arrived" announcement in the student's language
+Sarvam AI handles every language step:
+| Step | Sarvam model |
+|---|---|
+| Speech → text + language detection (campus place names passed as key terms) | **Saaras v4** (falls back to v3) |
+| Understanding the trip: "Opal se Orion jana hai" → `{pickup: opal, drop: orion}` | **Sarvam-105B** |
+| Reply in Telugu, Kannada, Malayalam, Bengali, Marathi, Gujarati, Punjabi… | **Sarvam Translate** |
+| Spoken confirmation + "EV has arrived" announcement | **Bulbul v3** |
 
 ## Run locally
 ```powershell
@@ -21,7 +24,7 @@ Open http://localhost:8000. For voice, copy `.env.example` to `.env` and add you
 ## Layout
 ```
 public/        frontend: map, shortest paths, dispatch, EV simulation (vanilla JS + SVG)
-mvp/           FastAPI backend: Sarvam STT / LLM / TTS proxy + campus map (campus.json)
+mvp/           FastAPI backend: Sarvam Saaras / Sarvam-105B / Translate / Bulbul proxy + campus map (campus.json)
 app.py         Vercel entrypoint
 ```
 Details and the demo script: [mvp/README.md](mvp/README.md).

@@ -36,6 +36,7 @@ class UnderstandRequest(BaseModel):
 class SpeakRequest(BaseModel):
     text: str
     lang: str = "en-IN"
+    translate: bool = False   # text is English: translate it with Sarvam Translate first
 
 
 def _ms(t0: float) -> int:
@@ -69,7 +70,8 @@ async def voice(audio: UploadFile = File(...), lang: str = Form("unknown")):
         return JSONResponse({"error": "recording too short, hold the mic a bit longer"}, status_code=400)
     t0 = time.perf_counter()
     try:
-        transcript, detected = await asyncio.to_thread(sarvam.stt, data, audio.filename or "speech.webm", lang)
+        transcript, detected = await asyncio.to_thread(
+            sarvam.stt, data, audio.filename or "speech.webm", lang, nlu.KEYTERMS)
     except sarvam.SarvamError as e:
         return JSONResponse({"error": str(e)}, status_code=502)
     stt_ms = _ms(t0)
@@ -85,12 +87,21 @@ async def voice(audio: UploadFile = File(...), lang: str = Form("unknown")):
 async def speak(req: SpeakRequest):
     if not req.text.strip():
         return JSONResponse({"error": "empty text"}, status_code=400)
+    text, timings = req.text, {}
+    if req.translate and req.lang != "en-IN":
+        t0 = time.perf_counter()
+        try:
+            text = await asyncio.to_thread(sarvam.translate, req.text, req.lang)
+        except sarvam.SarvamError:
+            pass   # speak the English text rather than nothing
+        timings["translate_ms"] = _ms(t0)
     t0 = time.perf_counter()
     try:
-        audio = await asyncio.to_thread(sarvam.tts, req.text, req.lang)
+        audio = await asyncio.to_thread(sarvam.tts, text, req.lang)
     except sarvam.SarvamError as e:
-        return JSONResponse({"error": str(e)}, status_code=502)
-    return {"audio_b64": audio, "timings": {"tts_ms": _ms(t0)}}
+        return JSONResponse({"error": str(e), "text": text}, status_code=502)
+    timings["tts_ms"] = _ms(t0)
+    return {"audio_b64": audio, "text": text, "timings": timings}
 
 
 # Local dev serves the frontend too. On Vercel, public/ is served by the CDN and may not exist in the function bundle.

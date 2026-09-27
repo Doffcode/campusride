@@ -16,9 +16,9 @@ Tests (offline): `.venv\Scripts\python -m pip install -r requirements-dev.txt` t
 ## What it does
 | Feature | How |
 |---|---|
-| Speak in Hindi / Tamil / English / Hinglish | Sarvam **Saaras v3** speech-to-text (auto-detects the language) |
+| Speak in 11 Indian languages / Hinglish | Sarvam **Saaras v4** speech-to-text + language ID, with campus place names as key terms (falls back to v3) |
 | Understand "Opal se Orion jana hai" | Sarvam **Sarvam-105B** extracts `{pickup, drop}` from the campus place list. Falls back to alias rules if the LLM fails. |
-| Spoken confirmation + "EV has arrived" announcement | Sarvam **Bulbul v3**, in the student's language |
+| Spoken confirmation + "EV has arrived" announcement | **Sarvam Translate** → Sarvam **Bulbul v3**, in the student's language |
 | Only the destination said | Pickup = the student's pink pin on the map |
 | Only the pickup said | Asks "where do you want to go?" and remembers the pickup for the next sentence |
 | Student location | Drag the pink pin; it snaps to the nearest pickup point. Shows the live "nearest EV in N min". |
@@ -33,7 +33,7 @@ Tests (offline): `.venv\Scripts\python -m pip install -r requirements-dev.txt` t
 3. **Voice, Hindi:** drag the pink pin to Opal Hostel. Tap the mic: "मुझे ओरियन जाना है". Show the pipeline steps with timings. Only the destination was said, so the pickup comes from the pin. The Hindi voice reply plays.
 4. **Voice, Tamil or English** from another spot → a different EV, or it queues behind a busy one.
 5. Point at the map: the dashed EV heading to the pickup, the pulse while boarding, the passenger badge, the arrival announcement in the student's language.
-6. **Close:** "Sarvam handles the language (Saaras, Sarvam-105B, Bulbul) in 10+ Indian languages. A deterministic algorithm makes the dispatch decisions. Next: the same voice agent on a phone number (IVR) for students without smartphones, ride pooling, no-show auto-cancel, and class-timetable demand prediction."
+6. **Close:** "Sarvam AI handles every language step (Saaras v4, Sarvam-105B, Sarvam Translate, Bulbul v3) in 11 Indian languages. A deterministic algorithm makes the dispatch decisions. Next: the same voice agent on a phone number (IVR) for students without smartphones, ride pooling, no-show auto-cancel, and class-timetable demand prediction."
 
 ## If something goes wrong live
 - Sarvam slow or down: type the sentence instead (it falls back to rules), or use the Pick on map tab.
