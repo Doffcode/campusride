@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CampusRide · NIT Trichy</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">⚡</div>
+    <div>
+      <h1>CampusRide</h1>
+      <p>Voice-first EV dispatch · NIT Trichy</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="pill" id="sarvam-pill"><span class="dot"></span><span>Checking Sarvam…</span></span>
+    <span class="pill">Simulation speed
+      <span class="seg" id="speed-seg">
+        <button data-s="1">1×</button><button data-s="4">4×</button><button data-s="8" class="on">8×</button><button data-s="16">16×</button>
+      </span>
+    </span>
+    <button class="ghost-btn" id="reset-btn" title="Clear all rides and reset EVs">Reset</button>
+  </div>
+</header>
+
+<main>
+  <section class="map-col">
+    <div class="kpis">
+      <div class="card kpi"><div class="v" id="k-active">0</div><div class="l">Active rides</div></div>
+      <div class="card kpi"><div class="v" id="k-done">0</div><div class="l">Completed</div></div>
+      <div class="card kpi"><div class="v" id="k-eta">–</div><div class="l">Avg pickup ETA</div></div>
+      <div class="card kpi"><div class="v" id="k-voice">0</div><div class="l">Voice bookings (Sarvam)</div></div>
+    </div>
+    <div class="card map-card">
+      <svg id="map" viewBox="0 0 1000 700" role="img" aria-label="NIT Trichy campus map with EVs"></svg>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <aside>
+    <div class="card book">
+      <h2>Book a ride <span class="sub">No calls. No waiting blind.</span></h2>
+      <div class="row">
+        <div class="field">
+          <label for="name">Your name</label>
+          <input type="text" id="name" placeholder="e.g. Priya" maxlength="30" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="lang">Language</label>
+          <select id="lang">
+            <option value="unknown">Auto-detect</option>
+            <option value="en-IN">English</option>
+            <option value="hi-IN">हिन्दी</option>
+            <option value="ta-IN">தமிழ்</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button data-tab="voice" class="on">🎙️ Speak</button>
+        <button data-tab="manual">📍 Pick on map</button>
+      </div>
+
+      <div id="tab-voice">
+        <div class="mic-wrap">
+          <button id="mic-btn" title="Tap to speak">🎙️</button>
+          <div id="mic-hint">Tap and say where you are and where you want to go</div>
+          <div class="try">Try: <b>“मुझे ओपल हॉस्टल से ओरियन जाना है”</b></div>
+        </div>
+        <div class="say-row">
+          <input type="text" id="say-text" placeholder="…or type it: garnet se library jana hai" autocomplete="off">
+          <button class="btn secondary" id="say-btn">Send</button>
+        </div>
+        <ol class="steps" id="steps">
+          <li data-step="stt"><span class="ico"></span><span>Speech → text <small>· Sarvam Saaras v3</small></span><span class="ms"></span></li>
+          <li data-step="llm"><span class="ico"></span><span>Understand places <small>· Sarvam-105B</small></span><span class="ms"></span></li>
+          <li data-step="dispatch"><span class="ico"></span><span>Pick nearest EV <small>· shortest path</small></span><span class="ms"></span></li>
+          <li data-step="tts"><span class="ico"></span><span>Spoken reply <small>· Sarvam Bulbul v3</small></span><span class="ms"></span></li>
+        </ol>
+        <div class="result hidden" id="result">
+          <div class="said" id="res-said"></div>
+          <div class="chips" id="res-chips"></div>
+          <div class="reply" id="res-reply"></div>
+        </div>
+      </div>
+
+      <div id="tab-manual" class="hidden">
+        <div class="row">
+          <div class="field"><label for="pickup">From</label><select id="pickup"></select></div>
+          <div class="field"><label for="drop">To</label><select id="drop"></select></div>
+        </div>
+        <div class="route-preview" id="route-preview">Tip: click a place on the map to set From, then To.</div>
+        <button class="btn block" id="book-btn">Book ride</button>
+        <button class="btn secondary block" id="demo-btn" style="margin-top:8px">▶ Load 3 sample rides</button>
+      </div>
+    </div>
+
+    <div class="card list-card">
+      <h2>Rides <span class="sub" id="rides-sub">tap a ride to highlight its route</span></h2>
+      <div class="rides" id="rides"><div class="empty">No rides yet. Book one above.</div></div>
+    </div>
+
+    <div class="card list-card">
+      <h2>Fleet</h2>
+      <div class="fleet" id="fleet"></div>
+      <label class="check"><input type="checkbox" id="announce" checked> Announce EV arrival to the student (Sarvam TTS)</label>
+    </div>
+  </aside>
+</main>
+
+<div id="toasts"></div>
+<script src="app.js"></script>
+</body>
+</html>

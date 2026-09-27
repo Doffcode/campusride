@@ -1,0 +1,16 @@
+# Secrets: never commit the Sarvam key
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local tooling
+.claude/
+.vercel/
+shared/samples/
+voice_reply.wav

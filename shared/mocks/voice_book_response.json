@@ -1,0 +1,15 @@
+{
+  "_comment": "Two examples. 'ok' = booked. 'clarify' = pickup not understood, no ride created. reply_audio_b64 is shortened here; real value is a long base64 WAV.",
+  "ok": {
+    "transcript": "मुझे हॉस्टल ए से एकेडमिक ब्लॉक जाना है",
+    "intent": {"pickup": "hostel_a", "drop": "academic_block", "confidence": 0.93, "needs_clarification": false, "reply_text": "आपकी राइड बुक हो गई है। EV 2 लगभग 1 मिनट में Hostel A पहुँचेगी।"},
+    "ride": {"id": "ride_2", "student_name": "Priya", "pickup": "hostel_a", "drop": "academic_block", "lang": "hi-IN", "status": "assigned", "ev_id": "ev_2", "eta_min": 1, "created_at": 1790000010, "arrived_at": null},
+    "reply_audio_b64": "UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA="
+  },
+  "clarify": {
+    "transcript": "मुझे लाइब्रेरी जाना है",
+    "intent": {"pickup": null, "drop": "library", "confidence": 0.8, "needs_clarification": true, "reply_text": "माफ़ कीजिए, आप अभी कहाँ हैं? कृपया अपनी पिकअप जगह बताइए।"},
+    "ride": null,
+    "reply_audio_b64": "UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA="
+  }
+}

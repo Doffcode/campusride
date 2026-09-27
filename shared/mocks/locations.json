@@ -1,0 +1,12 @@
+[
+  {"id": "main_gate",      "name": "Main Gate",      "x": 100, "y": 500},
+  {"id": "admin_block",    "name": "Admin Block",    "x": 250, "y": 400},
+  {"id": "library",        "name": "Library",        "x": 400, "y": 300},
+  {"id": "academic_block", "name": "Academic Block", "x": 550, "y": 250},
+  {"id": "cafeteria",      "name": "Cafeteria",      "x": 400, "y": 500},
+  {"id": "hostel_a",       "name": "Hostel A",       "x": 700, "y": 150},
+  {"id": "hostel_b",       "name": "Hostel B",       "x": 850, "y": 250},
+  {"id": "sports_complex", "name": "Sports Complex", "x": 700, "y": 600},
+  {"id": "medical_center", "name": "Medical Center", "x": 250, "y": 650},
+  {"id": "girls_hostel",   "name": "Girls Hostel",   "x": 850, "y": 500}
+]

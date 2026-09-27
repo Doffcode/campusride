@@ -1,0 +1,48 @@
+{
+  "evs": [
+    {
+      "id": "ev_1",
+      "current_node": "medical_center",
+      "route": ["cafeteria"],
+      "progress": 0.0,
+      "stops": [
+        {"ride_id": "ride_3", "node": "medical_center", "kind": "pickup"},
+        {"ride_id": "ride_3", "node": "cafeteria", "kind": "drop"}
+      ],
+      "seats_free": 3,
+      "status": "waiting"
+    },
+    {
+      "id": "ev_2",
+      "current_node": "hostel_b",
+      "route": ["hostel_a", "academic_block", "library"],
+      "progress": 0.4,
+      "stops": [
+        {"ride_id": "ride_1", "node": "hostel_a", "kind": "pickup"},
+        {"ride_id": "ride_2", "node": "hostel_a", "kind": "pickup"},
+        {"ride_id": "ride_2", "node": "academic_block", "kind": "drop"},
+        {"ride_id": "ride_1", "node": "library", "kind": "drop"}
+      ],
+      "seats_free": 2,
+      "status": "enroute"
+    },
+    {
+      "id": "ev_3",
+      "current_node": "library",
+      "route": [],
+      "progress": 0.0,
+      "stops": [],
+      "seats_free": 4,
+      "status": "idle"
+    }
+  ],
+  "rides": [
+    {"id": "ride_1", "student_name": "Aarav", "pickup": "hostel_a", "drop": "library", "lang": "en-IN", "status": "assigned", "ev_id": "ev_2", "eta_min": 1, "created_at": 1790000000, "arrived_at": null},
+    {"id": "ride_2", "student_name": "Priya", "pickup": "hostel_a", "drop": "academic_block", "lang": "hi-IN", "status": "assigned", "ev_id": "ev_2", "eta_min": 1, "created_at": 1790000010, "arrived_at": null},
+    {"id": "ride_3", "student_name": "Karthik", "pickup": "medical_center", "drop": "cafeteria", "lang": "ta-IN", "status": "waiting_at_pickup", "ev_id": "ev_1", "eta_min": 0, "created_at": 1790000020, "arrived_at": 1790000080},
+    {"id": "ride_4", "student_name": "Rohan", "pickup": "cafeteria", "drop": "sports_complex", "lang": "en-IN", "status": "no_show", "ev_id": "ev_3", "eta_min": null, "created_at": 1789999700, "arrived_at": 1789999760},
+    {"id": "ride_5", "student_name": "Sneha", "pickup": "girls_hostel", "drop": "library", "lang": "hi-IN", "status": "done", "ev_id": "ev_3", "eta_min": null, "created_at": 1789999500, "arrived_at": 1789999560},
+    {"id": "ride_6", "student_name": "Meera", "pickup": "sports_complex", "drop": "main_gate", "lang": "en-IN", "status": "pending", "ev_id": null, "eta_min": null, "created_at": 1790000095, "arrived_at": null}
+  ],
+  "server_time": 1790000100
+}

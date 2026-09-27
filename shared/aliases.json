@@ -1,0 +1,13 @@
+{
+  "_comment": "Words people may say for each location. All lowercase. Used by voice/ for the LLM prompt and the offline rule-based fallback. Includes English, Romanized Hindi, Devanagari, and Tamil script. Add more when you swap in the real campus.",
+  "main_gate":      ["main gate", "gate", "front gate", "मेन गेट", "गेट", "मुख्य द्वार", "மெயின் கேட்", "நுழைவாயில்"],
+  "admin_block":    ["admin block", "admin", "administration", "एडमिन ब्लॉक", "एडमिन", "प्रशासन", "அட்மின் பிளாக்", "நிர்வாகம்"],
+  "library":        ["library", "lib", "लाइब्रेरी", "पुस्तकालय", "लायब्रेरी", "லைப்ரரி", "நூலகம்"],
+  "academic_block": ["academic block", "academic", "classes", "class", "एकेडमिक ब्लॉक", "एकेडमिक", "अकादमिक", "क्लास", "அகாடமிக் பிளாக்", "வகுப்பறை"],
+  "cafeteria":      ["cafeteria", "canteen", "cafe", "mess", "कैंटीन", "कैफेटेरिया", "मेस", "கேண்டீன்", "உணவகம்"],
+  "hostel_a":       ["hostel a", "a hostel", "hostel-a", "हॉस्टल ए", "होस्टल ए", "हॉस्टल a", "ஹாஸ்டல் ஏ", "விடுதி ஏ"],
+  "hostel_b":       ["hostel b", "b hostel", "hostel-b", "हॉस्टल बी", "होस्टल बी", "हॉस्टल b", "ஹாஸ்டல் பி", "விடுதி பி"],
+  "sports_complex": ["sports complex", "sports", "ground", "gym", "स्पोर्ट्स कॉम्प्लेक्स", "स्पोर्ट्स", "ग्राउंड", "मैदान", "ஸ்போர்ட்ஸ்", "மைதானம்"],
+  "medical_center": ["medical center", "medical centre", "medical", "hospital", "clinic", "मेडिकल", "अस्पताल", "डिस्पेंसरी", "மெடிக்கல்", "மருத்துவமனை"],
+  "girls_hostel":   ["girls hostel", "ladies hostel", "गर्ल्स हॉस्टल", "गर्ल्स होस्टल", "लड़कियों का हॉस्टल", "கேர்ள்ஸ் ஹாஸ்டல்", "பெண்கள் விடுதி"]
+}

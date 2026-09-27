@@ -1,0 +1,31 @@
+{
+  "_comment": "Campus map. Edges are two-way. meters = real road distance. x,y only for drawing (SVG viewBox 0 0 1000 800). Replace with the real campus later; acceptance tests use acceptance/fixtures/test_graph.json, not this file.",
+  "nodes": [
+    {"id": "main_gate",      "name": "Main Gate",      "x": 100, "y": 500},
+    {"id": "admin_block",    "name": "Admin Block",    "x": 250, "y": 400},
+    {"id": "library",        "name": "Library",        "x": 400, "y": 300},
+    {"id": "academic_block", "name": "Academic Block", "x": 550, "y": 250},
+    {"id": "cafeteria",      "name": "Cafeteria",      "x": 400, "y": 500},
+    {"id": "hostel_a",       "name": "Hostel A",       "x": 700, "y": 150},
+    {"id": "hostel_b",       "name": "Hostel B",       "x": 850, "y": 250},
+    {"id": "sports_complex", "name": "Sports Complex", "x": 700, "y": 600},
+    {"id": "medical_center", "name": "Medical Center", "x": 250, "y": 650},
+    {"id": "girls_hostel",   "name": "Girls Hostel",   "x": 850, "y": 500}
+  ],
+  "edges": [
+    {"a": "main_gate",      "b": "admin_block",    "meters": 300},
+    {"a": "admin_block",    "b": "library",        "meters": 250},
+    {"a": "admin_block",    "b": "cafeteria",      "meters": 200},
+    {"a": "library",        "b": "academic_block", "meters": 200},
+    {"a": "library",        "b": "cafeteria",      "meters": 200},
+    {"a": "academic_block", "b": "hostel_a",       "meters": 250},
+    {"a": "hostel_a",       "b": "hostel_b",       "meters": 200},
+    {"a": "academic_block", "b": "hostel_b",       "meters": 350},
+    {"a": "cafeteria",      "b": "sports_complex", "meters": 350},
+    {"a": "sports_complex", "b": "girls_hostel",   "meters": 200},
+    {"a": "girls_hostel",   "b": "hostel_b",       "meters": 250},
+    {"a": "main_gate",      "b": "medical_center", "meters": 250},
+    {"a": "medical_center", "b": "cafeteria",      "meters": 250},
+    {"a": "medical_center", "b": "sports_complex", "meters": 450}
+  ]
+}

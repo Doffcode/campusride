@@ -1,0 +1,12 @@
+# Only the MVP is deployed: app.py, mvp/, public/, requirements.txt
+.venv
+.env
+acceptance
+tasks
+shared
+dispatch
+backend
+voice
+frontend
+mvp/tests
+conftest.py
