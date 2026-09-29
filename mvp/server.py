@@ -6,6 +6,7 @@ Vercel: app.py at the repo root re-exports this app; public/ is served by Vercel
 """
 
 import asyncio
+import os
 import time
 from pathlib import Path
 
@@ -50,7 +51,11 @@ def campus():
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "sarvam_key": sarvam.has_key()}
+    # Names only (never values): shows whether the deploy can see the key and which build is live.
+    return {"ok": True, "sarvam_key": sarvam.has_key(),
+            "sarvam_env_names": sorted(k for k in os.environ if "SARVAM" in k.upper()),
+            "vercel_env": os.environ.get("VERCEL_ENV", "local"),
+            "commit": os.environ.get("VERCEL_GIT_COMMIT_SHA", "")[:7]}
 
 
 @app.post("/api/understand")
