@@ -14,7 +14,9 @@ Sarvam AI handles every language step:
 ```powershell
 powershell -ExecutionPolicy Bypass -File mvp\run.ps1
 ```
-Open http://localhost:8000. For voice, copy `.env.example` to `.env` and add your `SARVAM_API_KEY`.
+Live: https://campusride-plum.vercel.app
+
+Locally: open http://localhost:8000. For voice, copy `.env.example` to `.env` and add your `SARVAM_API_KEY`.
 
 ## Deploy on Vercel
 1. Import this GitHub repo in Vercel. No build settings are needed: `app.py` is the FastAPI entrypoint and `public/` is the frontend.

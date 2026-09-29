@@ -2,7 +2,7 @@ Hi, I'm Shivansh Sharma. I built CampusRide: a voice-first EV dispatch system fo
 
 CampusRide — Voice-First Campus EV Dispatch, powered by Sarvam AI
 
-Live demo: [Vercel link]
+Live demo: https://campusride-plum.vercel.app
 Repo: https://github.com/Doffcode/campusride
 
 The Problem
