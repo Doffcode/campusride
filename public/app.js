@@ -4,6 +4,7 @@
 
 const SPEED = 250 / 60;        // EV speed in meters per sim-second (15 km/h)
 const DWELL = 20;              // sim-seconds an EV waits at a pickup while the student boards
+const CAP = 4;                 // seats per EV (matches shared/models.py EV_CAPACITY)
 const REPLY_LANGS = ['en-IN', 'hi-IN', 'ta-IN'];   // hand-written templates; every other language goes through Sarvam Translate
 const LANG_NAMES = {
   'en-IN': 'English', 'hi-IN': 'Hindi', 'ta-IN': 'Tamil', 'te-IN': 'Telugu', 'kn-IN': 'Kannada', 'ml-IN': 'Malayalam',
@@ -115,13 +116,74 @@ function timeline(ev) {
   return { arr, endT: t, endNode: pos };
 }
 
-/** Best EV for a pickup = the one that can reach it soonest after finishing its current jobs. */
+/** How many of this EV's rides are still active (assigned/boarding/onboard, not yet dropped). */
+function activeCount(ev) {
+  return S.rides.filter((r) => r.evId === ev.id && r.status !== 'done').length;
+}
+
+/** Cumulative meters from `node`, through `legs` in order (mirrors dispatch/core.py's _arrivals). */
+function arrivalsFrom(node, legs) {
+  const out = [];
+  let cur = node, total = 0;
+  for (const leg of legs) {
+    total += sp(cur, leg.node).m;
+    out.push(total);
+    cur = leg.node;
+  }
+  return out;
+}
+
+/** Nearest EV for a pickup, searching every valid insertion position in its queue (not just the
+ * tail) and skipping EVs already at capacity. Pickup-only: used for the live "nearest EV" preview
+ * before a drop is known, so it ranks by pickup time alone, not full insertion cost (see
+ * bestInsertion for the real booking decision, which also accounts for the detour to other riders
+ * already on board). */
 function bestEv(pickup) {
-  let best = null;
+  let best = null; // {ev, i, t}
   for (const ev of [...S.evs].sort((a, b) => (a.id < b.id ? -1 : 1))) {
-    const tl = timeline(ev);
-    const t = tl.endT + sp(tl.endNode, pickup).m / SPEED;
-    if (!best || t < best.t - 1e-9) best = { ev, t };
+    if (activeCount(ev) >= CAP) continue;
+    const old = ev.legs;
+    const arr = arrivalsFrom(ev.node, old);
+    const firstI = ev.dwell > 0 ? 1 : 0;        // can't bump a pickup already boarding
+    for (let i = firstI; i <= old.length; i++) {
+      const from = i === 0 ? ev.node : old[i - 1].node;
+      const pickupM = (i === 0 ? 0 : arr[i - 1]) + sp(from, pickup).m;
+      const t = pickupM / SPEED;
+      if (!best || t < best.t - 1e-9) best = { ev, i, t };
+    }
+  }
+  return best;
+}
+
+/** Cheapest-insertion dispatch for a full ride (pickup + drop): try every valid insertion
+ * position-pair in every EV with a free seat, cost = meters to the new pickup + the detour the
+ * insertion adds to every stop already on that EV's queue. Same algorithm as dispatch/core.py's
+ * assign() (acceptance-tested there), ported to the live `legs` queue. Returns null if every EV
+ * is at capacity — the caller should tell the student to try again shortly. */
+function bestInsertion(pickup, drop) {
+  let best = null; // {ev, i, j, pickupM, cost}
+  for (const ev of [...S.evs].sort((a, b) => (a.id < b.id ? -1 : 1))) {
+    if (activeCount(ev) >= CAP) continue;
+    const old = ev.legs;
+    const oldArr = arrivalsFrom(ev.node, old);
+    const oldDrop = {};
+    old.forEach((leg, k) => { if (leg.kind === 'drop') oldDrop[leg.rideId] = oldArr[k]; });
+    const firstI = ev.dwell > 0 ? 1 : 0;
+    for (let i = firstI; i <= old.length; i++) {
+      for (let j = i + 1; j <= old.length + 1; j++) {
+        const withPD = old.slice();
+        withPD.splice(i, 0, { rideId: null, kind: 'pickup', node: pickup });
+        withPD.splice(j, 0, { rideId: null, kind: 'drop', node: drop });
+        const arr = arrivalsFrom(ev.node, withPD);
+        const pickupM = arr[i];
+        let detour = 0;
+        withPD.forEach((leg, k) => {
+          if (leg.kind === 'drop' && leg.rideId !== null && leg.rideId in oldDrop) detour += arr[k] - oldDrop[leg.rideId];
+        });
+        const cost = pickupM + detour;
+        if (!best || cost < best.cost - 1e-9) best = { ev, i, j, pickupM, cost };
+      }
+    }
   }
   return best;
 }
@@ -183,13 +245,20 @@ function bookRide({ pickup, drop, who, lang, via, speakIt }) {
   if (!NODES[pickup] || !NODES[drop]) { toast('Unknown place', 'err'); return null; }
   if (pickup === drop) { toast('Pickup and destination are the same place', 'err'); return null; }
   const t0 = performance.now();
-  const best = bestEv(pickup);
+  const best = bestInsertion(pickup, drop);
+  if (!best) { toast('Every EV is full right now — try again shortly', 'err'); return null; }
   const r = {
     id: `R${S.nextId++}`, name: who, pickup, drop, lang, via, speak: speakIt, mine: true,
-    evId: best.ev.id, status: 'assigned', etaAtBooking: Math.max(1, Math.ceil(best.t / 60)),
+    evId: best.ev.id, status: 'assigned', etaAtBooking: Math.max(1, Math.ceil(best.pickupM / SPEED / 60)),
     tripM: sp(pickup, drop).m, flashUntil: performance.now() + 1600,
   };
-  best.ev.legs.push({ rideId: r.id, kind: 'pickup', node: pickup }, { rideId: r.id, kind: 'drop', node: drop });
+  // Insert at the cheapest position found, not just the tail — this is what lets a pickup that's
+  // "on the way" ride along with an EV's existing queue instead of waiting behind all of it.
+  // The EV still finishes whatever edge it's currently mid-drive on before redirecting toward a
+  // newly front-inserted stop (step() only replans once its committed route empties) — a small,
+  // deliberate simplification so the map never visually snaps the EV backward.
+  best.ev.legs.splice(best.i, 0, { rideId: r.id, kind: 'pickup', node: pickup });
+  best.ev.legs.splice(best.j, 0, { rideId: r.id, kind: 'drop', node: drop });
   S.rides.unshift(r);
   S.selected = r.id;
   renderPanels();
@@ -423,7 +492,7 @@ function drawPins() {
 
 function updateMeBubble() {
   const best = bestEv(S.me.node);
-  const txt = `You · nearest EV ${fmtEta(best.t)}`;
+  const txt = best ? `You · nearest EV ${fmtEta(best.t)}` : 'You · all EVs full';
   if (G.me.bt.textContent !== txt) {
     G.me.bt.textContent = txt;
     const w = G.me.bt.getComputedTextLength() + 20;
@@ -449,11 +518,12 @@ function renderPanels() {
 
   // route preview in the manual tab
   const rp = $('#route-preview');
+  const nearest = best ? `EV ${best.ev.num}, ${fmtEta(best.t)}` : 'none free — every EV is full';
   if (S.dest && S.dest !== S.me.node) {
     const trip = sp(S.me.node, S.dest);
-    rp.innerHTML = `<b>${esc(name(S.me.node))} → ${esc(name(S.dest))}</b> · ${(trip.m / 1000).toFixed(1)} km by road · ~${Math.ceil(trip.m / SPEED / 60)} min ride<br>EV ${best.ev.num} can pick you up in <b>${fmtEta(best.t)}</b>`;
+    rp.innerHTML = `<b>${esc(name(S.me.node))} → ${esc(name(S.dest))}</b> · ${(trip.m / 1000).toFixed(1)} km by road · ~${Math.ceil(trip.m / SPEED / 60)} min ride<br>Nearest EV: <b>${nearest}</b>`;
   } else {
-    rp.innerHTML = `Your pickup: <b>${esc(name(S.me.node))}</b> (drag the pink pin to move). Nearest EV: <b>EV ${best.ev.num}, ${fmtEta(best.t)}</b>. Click a place on the map to set the destination.`;
+    rp.innerHTML = `Your pickup: <b>${esc(name(S.me.node))}</b> (drag the pink pin to move). Nearest EV: <b>${nearest}</b>. Click a place on the map to set the destination.`;
   }
 
   // rides
@@ -801,5 +871,5 @@ async function boot() {
   setInterval(frame, 1000 / 30);
 }
 
-window.CampusRide = { sp, bestEv, timeline, bookRide, get state() { return S; } };  // for debugging in the console
+window.CampusRide = { sp, bestEv, bestInsertion, timeline, bookRide, get state() { return S; } };  // for debugging in the console
 boot();
